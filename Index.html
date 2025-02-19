@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digitale Visitenkarte</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js"></script>
+</head>
+<body>
+
+    <h1>Willkommen zur digitalen NFC-Visitenkarte</h1>
+    <p>Hier kannst du deine Visitenkarte herunterladen.</p>
+
+    <div id="vCardDownload">
+        <!-- Hier wird der vCard-Link angezeigt -->
+    </div>
+
+    <script type="module">
+        // Firebase-Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKmHVfaNYbQrs7DkBxoyI5UbvngZ9eI1k",                // Ersetze mit deinem Firebase API Key
+            authDomain: "nfc-poc-bd710.firebaseapp.com", // Ersetze mit deinem Firebase Auth-Domain
+            projectId: "nfc-poc-bd710",           // Ersetze mit deiner Projekt-ID
+            storageBucket: "nfc-poc-bd710.firebasestorage.app",  // Ersetze mit deinem Storage-Bucket
+            messagingSenderId: "657750736935",     // Ersetze mit deinem Messaging-Sender-ID
+            appId: "1:657750736935:web:53c1c4079e2f446d7a0e02"                    // Ersetze mit deiner App-ID
+        };
+
+        // Firebase initialisieren
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+
+        // Die ID des Benutzers, den du abrufen möchtest (z.B. user123)
+        const userId = "user123"; // Hier kannst du die Benutzer-ID eingeben
+
+        // Daten von Firestore abrufen
+        db.collection("users").doc(userId).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const userData = doc.data();
+
+                    // vCard im vCard-Format erstellen
+                    const vCard = `
+                        BEGIN:VCARD
+                        VERSION:3.0
+                        FN:${userData.name}
+                        ORG:${userData.company}
+                        TEL:${userData.phone}
+                        EMAIL:${userData.email}
+                        ADR:${userData.address}
+                        URL:${userData.website}
+                        X-SOCIALPROFILE;type=instagram:${userData.instagram}
+                        X-SOCIALPROFILE;type=linkedin:${userData.linkedin}
+                        END:VCARD
+                    `;
+
+                    // vCard Blob erstellen
+                    const vCardBlob = new Blob([vCard], { type: "text/vcard" });
+                    const vCardUrl = URL.createObjectURL(vCardBlob);
+
+                    // Download-Link erstellen
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = vCardUrl;
+                    downloadLink.download = `${userData.name}.vcf`;
+                    downloadLink.innerText = "Klicke hier, um deine vCard herunterzuladen";
+
+                    // Download-Link auf der Webseite anzeigen
+                    document.getElementById("vCardDownload").appendChild(downloadLink);
+                } else {
+                    console.log("Benutzerdaten nicht gefunden");
+                    document.getElementById("vCardDownload").innerHTML = "Benutzerdaten nicht gefunden.";
+                }
+            })
+            .catch((error) => {
+                console.log("Fehler beim Abrufen der Benutzerdaten: ", error);
+                document.getElementById("vCardDownload").innerHTML = "Fehler beim Abrufen der Benutzerdaten.";
+            });
+    </script>
+
+</body>
+</html>
